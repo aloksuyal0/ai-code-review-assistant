@@ -1,41 +1,26 @@
-type Review = {
-  score: number;
-  bugs: string[];
-  performance: string;
-  security: string;
-  suggestions: string[];
-};
+"use client";
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 type Props = {
-  review: Review | null;
+  review: string;
 };
 
 export default function ReviewCard({ review }: Props) {
   if (!review) return null;
 
   return (
-    <div className="mt-6 rounded-lg border bg-white p-6">
-      <h2 className="text-2xl font-bold">Review Result</h2>
+    <div className="mt-8 rounded-xl border border-gray-300 bg-white p-8 shadow-lg">
+      <h2 className="mb-6 text-3xl font-bold text-blue-600">
+        🤖 AI Code Review
+      </h2>
 
-      <p>
-        <strong>Score:</strong> {review.score}/100
-      </p>
-
-      <p>
-        <strong>Performance:</strong> {review.performance}
-      </p>
-
-      <p>
-        <strong>Security:</strong> {review.security}
-      </p>
-
-      <h3 className="mt-4 font-semibold">Suggestions</h3>
-
-      <ul className="list-disc pl-6">
-        {review.suggestions.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
+      <article className="prose prose-lg max-w-none">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {review}
+        </ReactMarkdown>
+      </article>
     </div>
   );
 }
