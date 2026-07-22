@@ -44,17 +44,37 @@ def home():
 def review_code(data: CodeRequest):
     try:
         prompt = f"""
-You are an expert code reviewer.
+You are a Senior Software Engineer and Expert Code Reviewer.
 
-Review the following {data.language} code.
+Analyze the following {data.language} code carefully.
 
-Provide:
-1. Bugs (if any)
-2. Code Improvements
-3. Best Practices
-4. Optimized Version (if possible)
+Return your answer in **Markdown** format using the exact headings below.
 
-Code:
+# 🐞 Bugs
+- List all bugs.
+- If there are no bugs, write: **No major bugs found.**
+
+# 🚀 Improvements
+- Suggest improvements for readability, maintainability, and performance.
+
+# ✅ Best Practices
+- Mention coding standards, naming, formatting, documentation, and security recommendations.
+
+# ⚡ Complexity
+- Estimate the Time Complexity.
+- Estimate the Space Complexity.
+
+# 💻 Optimized Code
+- Provide an improved version of the code.
+- Wrap the code inside a Markdown code block.
+- Preserve the original programming language.
+
+# 📝 Summary
+- Give a short overall review in 2–3 sentences.
+
+Code to review:
+
+```{data.language}
 {data.code}
 """
 
@@ -75,7 +95,9 @@ Code:
                         },
                     ],
                     temperature=0.3,
+                    max_tokens=1200,
                 )
+
                 break
 
             except Exception as e:
