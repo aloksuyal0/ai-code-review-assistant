@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Clipboard, ClipboardCopy, TriangleAlert } from "lucide-react";
+import {
+  Check,
+  Clipboard,
+  ClipboardCopy,
+  Download,
+  TriangleAlert,
+} from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { exportReview } from "@/utils/exportReview";
-import { Download } from "lucide-react";
 
 type Props = {
   review: string;
@@ -38,16 +43,18 @@ export default function ReviewCard({
   return (
     <section
       aria-live="polite"
-      className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-xl"
+      className="overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800"
     >
-      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
         <div className="flex items-center gap-3">
           <span className="text-3xl" aria-hidden="true">
             🤖
           </span>
           <div>
-            <h2 className="text-xl font-bold text-slate-900">AI Code Review</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              AI Code Review
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Actionable feedback and a suggested rewrite
             </p>
             {reviewTime !== null && (
@@ -98,7 +105,7 @@ export default function ReviewCard({
             </div>
           </div>
         ) : !review ? (
-          <div className="py-10 text-center text-slate-500">
+          <div className="py-10 text-center text-slate-500 dark:text-slate-300">
             <div className="mb-4 text-5xl" aria-hidden="true">
               💡
             </div>
@@ -108,7 +115,7 @@ export default function ReviewCard({
             </p>
           </div>
         ) : (
-          <article className="prose prose-slate max-w-none prose-headings:scroll-mt-24">
+          <article className="max-w-none text-slate-800 dark:text-slate-200">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
@@ -133,7 +140,7 @@ export default function ReviewCard({
                       </SyntaxHighlighter>
                     </div>
                   ) : (
-                    <code className="rounded bg-slate-100 px-1 py-0.5 text-red-600">
+                    <code className="rounded bg-slate-100 px-1 py-0.5 text-red-600 dark:bg-slate-700 dark:text-red-300">
                       {children}
                     </code>
                   );

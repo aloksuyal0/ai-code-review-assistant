@@ -117,6 +117,7 @@ export default function CodeEditor({
         )}
 
         <Editor
+          key={resolvedTheme}
           height="480px"
           language={language}
           theme={resolvedTheme === "dark" ? "vs-dark" : "light"}

@@ -73,7 +73,7 @@ const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 export default function Home() {
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState(samples.python);
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [review, setReview] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -233,17 +233,23 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="rounded-xl border border-slate-300 bg-white p-3 shadow-sm transition hover:bg-slate-100"
+              onClick={() =>
+                setTheme(resolvedTheme === "dark" ? "light" : "dark")
+              }
+              className="rounded-xl border border-slate-300 bg-white p-3 text-slate-700 shadow-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
               title="Toggle Theme"
             >
-              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+              {resolvedTheme === "dark" ? (
+                <Sun size={18} />
+              ) : (
+                <Moon size={18} />
+              )}
             </button>
 
             <button
               type="button"
               onClick={resetEditor}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-700"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-400 hover:text-blue-700 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
             >
               <RotateCcw size={16} />
               Load Example
@@ -291,7 +297,7 @@ export default function Home() {
               {history.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-start justify-between rounded-lg border border-slate-300 p-4 transition hover:bg-slate-50"
+                  className="flex items-start justify-between rounded-lg border border-slate-300 p-4 transition hover:bg-slate-50 dark:border-slate-600 dark:hover:bg-slate-700"
                 >
                   <div
                     onClick={() => loadHistory(item)}
@@ -301,7 +307,9 @@ export default function Home() {
                       {item.language.toUpperCase()}
                     </p>
 
-                    <p className="text-sm text-slate-500">{item.createdAt}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {item.createdAt}
+                    </p>
 
                     <p className="mt-2 text-sm">
                       Review Time: {item.reviewTime}s
