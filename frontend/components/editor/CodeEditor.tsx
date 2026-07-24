@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTheme } from "next-themes";
 import Editor from "@monaco-editor/react";
 import { Upload } from "lucide-react";
 
@@ -25,6 +26,8 @@ export default function CodeEditor({
   setCode,
   onFileUpload,
 }: Props) {
+  const { resolvedTheme } = useTheme();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -50,10 +53,10 @@ export default function CodeEditor({
       className={`overflow-hidden rounded-2xl border shadow-lg transition-all duration-200 ${
         isDragging
           ? "border-blue-500 ring-4 ring-blue-200"
-          : "border-slate-300"
+          : "border-slate-300 dark:border-slate-700"
       }`}
     >
-      <div className="flex items-center justify-between border-b border-slate-300 bg-slate-800 px-5 py-3">
+      <div className="flex items-center justify-between border-b border-slate-300 bg-slate-800 px-5 py-3 dark:border-slate-700">
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-red-500" />
           <span className="h-3 w-3 rounded-full bg-yellow-400" />
@@ -99,14 +102,14 @@ export default function CodeEditor({
       <div className="relative">
         {isDragging && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-blue-600/10 backdrop-blur-sm">
-            <div className="rounded-xl border-2 border-dashed border-blue-600 bg-white px-8 py-6 text-center shadow-xl">
+            <div className="rounded-xl border-2 border-dashed border-blue-600 bg-white px-8 py-6 text-center shadow-xl dark:bg-slate-800">
               <Upload className="mx-auto mb-3 text-blue-600" size={42} />
 
-              <h3 className="text-lg font-bold text-slate-800">
+              <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                 Drop your code file here
               </h3>
 
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 Supported: .py .js .ts .java .cpp .txt
               </p>
             </div>
@@ -116,7 +119,7 @@ export default function CodeEditor({
         <Editor
           height="480px"
           language={language}
-          theme="vs-dark"
+          theme={resolvedTheme === "dark" ? "vs-dark" : "light"}
           value={code}
           onChange={(value) => setCode(value ?? "")}
           options={{
