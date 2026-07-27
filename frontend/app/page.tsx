@@ -74,10 +74,34 @@ export default function Home() {
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState(samples.python);
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => {
+      setMounted(true);
+    });
+    return () => cancelAnimationFrame(id);
+  }, []);
   const [review, setReview] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [repoUrl, setRepoUrl] = useState("");
+
+  const [repoData, setRepoData] = useState<{
+    name: string;
+    description: string;
+    default_branch: string;
+    language: string;
+    stars: number;
+    review: string;
+  } | null>(null);
+
+  const [repoLoading, setRepoLoading] = useState(false);
+  const [repoError, setRepoError] = useState("");
+
   const [reviewTime, setReviewTime] = useState<number | null>(null);
+
   const [history, setHistory] = useState<ReviewHistoryItem[]>(() => {
     if (typeof window === "undefined") return [];
 
@@ -210,6 +234,36 @@ export default function Home() {
       setLoading(false);
     }
   };
+  const reviewRepository = async () => {
+    if (!repoUrl.trim()) {
+      setRepoError("Please enter a GitHub repository URL.");
+      return;
+    }
+
+    setRepoLoading(true);
+    setRepoError("");
+    setRepoData(null);
+
+    try {
+      const { data } = await axios.post(`${apiUrl}/review-repository`, {
+        repo_url: repoUrl,
+      });
+
+      setRepoData(data);
+    } catch (err: unknown) {
+      console.error(err);
+
+      if (axios.isAxiosError<{ detail?: string }>(err)) {
+        setRepoError(
+          err.response?.data?.detail ?? "Unable to review repository.",
+        );
+      } else {
+        setRepoError("Something went wrong.");
+      }
+    } finally {
+      setRepoLoading(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-900 transition-colors dark:bg-slate-900 dark:text-slate-100">
@@ -226,7 +280,67 @@ export default function Home() {
             bugs, improvements, complexity notes, and an optimized version.
           </p>
         </div>
+        <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+          <h2 className="mb-4 text-xl font-bold text-slate-800 dark:text-white">
+            GitHub Repository Review
+          </h2>
 
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={repoUrl}
+              onChange={(e) => setRepoUrl(e.target.value)}
+              placeholder="https://github.com/username/repository"
+              className="flex-1 rounded-lg border border-slate-300 px-4 py-3 dark:bg-slate-900 dark:text-white"
+            />
+
+            <button
+              onClick={reviewRepository}
+              disabled={repoLoading}
+              className="rounded-lg bg-blue-600 px-5 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {repoLoading ? "Reviewing..." : "Review Repository"}
+            </button>
+          </div>
+
+          {repoError && <p className="mt-4 text-red-500">{repoError}</p>}
+
+          {repoData && (
+            <div className="mt-6 rounded-lg border border-slate-300 p-6 dark:border-slate-600">
+              <p>
+                <strong>Name:</strong> {repoData.name}
+              </p>
+
+              <p>
+                <strong>Description:</strong> {repoData.description}
+              </p>
+
+              <p>
+                <strong>Language:</strong> {repoData.language}
+              </p>
+
+              <p>
+                <strong>Default Branch:</strong> {repoData.default_branch}
+              </p>
+
+              <p>
+                <strong>⭐ Stars:</strong> {repoData.stars}
+              </p>
+
+              <hr className="my-6 border-slate-300 dark:border-slate-700" />
+
+              <h3 className="mb-4 text-2xl font-bold text-slate-900 dark:text-white">
+                🤖 AI Repository Review
+              </h3>
+
+              <div className="overflow-x-auto rounded-lg bg-slate-100 p-4 dark:bg-slate-900">
+                <pre className="whitespace-pre-wrap text-sm leading-7 text-slate-800 dark:text-slate-200">
+                  {repoData.review}
+                </pre>
+              </div>
+            </div>
+          )}
+        </div>
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <LanguageSelector language={language} setLanguage={changeLanguage} />
 
@@ -239,11 +353,13 @@ export default function Home() {
               className="rounded-xl border border-slate-300 bg-white p-3 text-slate-700 shadow-sm transition hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
               title="Toggle Theme"
             >
-              {resolvedTheme === "dark" ? (
-                <Sun size={18} />
-              ) : (
-                <Moon size={18} />
-              )}
+              {mounted ? (
+                resolvedTheme === "dark" ? (
+                  <Sun size={18} />
+                ) : (
+                  <Moon size={18} />
+                )
+              ) : null}
             </button>
 
             <button
