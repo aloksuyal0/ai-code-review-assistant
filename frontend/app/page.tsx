@@ -102,14 +102,7 @@ export default function Home() {
 
   const [reviewTime, setReviewTime] = useState<number | null>(null);
 
-  const [history, setHistory] = useState<ReviewHistoryItem[]>(() => {
-    if (typeof window === "undefined") return [];
-
-    const storedHistory = localStorage.getItem("review-history");
-    return storedHistory
-      ? (JSON.parse(storedHistory) as ReviewHistoryItem[])
-      : [];
-  });
+  const [history, setHistory] = useState<ReviewHistoryItem[]>([]);
 
   const changeLanguage = (nextLanguage: string) => {
     setLanguage(nextLanguage);
