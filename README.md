@@ -1,3 +1,5 @@
+# project made by Alok
+
 # AI Code Review Assistant
 
 A full-stack code review app built with Next.js, FastAPI, Monaco Editor, and OpenRouter. Paste code, select its language, and receive Markdown feedback covering bugs, improvements, best practices, complexity, and an optimized rewrite.
