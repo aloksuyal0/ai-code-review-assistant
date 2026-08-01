@@ -2,20 +2,17 @@ import logging
 import os
 import re
 import base64
-from collections.abc import Generator
-from contextlib import contextmanager
-
 import requests
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from openai import APIConnectionError, APIError, AuthenticationError, OpenAI, RateLimitError
 from app.models import (
-    
     CodeRequest,
     ReviewResponse,
     RepositoryRequest,
 )
+
+from app.services.ai_service import generate_ai_review
 
 load_dotenv()
 
@@ -30,27 +27,7 @@ def get_allowed_origins() -> list[str]:
         "http://localhost:3000,http://127.0.0.1:3000",
     )
     return [origin.strip() for origin in origins.split(",") if origin.strip()]
-@contextmanager
-def openrouter_client() -> Generator[OpenAI, None, None]:
-    api_key = os.getenv("OPENROUTER_API_KEY")
 
-    if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="The review service is not configured. Add OPENROUTER_API_KEY to backend/.env.",
-        )
-
-    client = OpenAI(
-        api_key=api_key,
-        base_url="https://openrouter.ai/api/v1",
-        timeout=45.0,
-        max_retries=2,
-    )
-
-    try:
-        yield client
-    finally:
-        client.close()
         
 
 
@@ -115,53 +92,6 @@ Give a score out of 10.
 # 📝 Summary
 """
 
-def generate_ai_review(prompt: str) -> str:
-    try:
-        with openrouter_client() as client:
-            response = client.chat.completions.create(
-                model=os.getenv("OPENROUTER_MODEL", DEFAULT_MODEL),
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a senior software engineer and expert code reviewer.",
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    },
-                ],
-                temperature=0.3,
-                max_tokens=2000,
-            )
-
-        review = response.choices[0].message.content
-
-        if not review:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail="The AI provider returned an empty review.",
-            )
-
-        return review
-
-    except HTTPException:
-        raise
-    except AuthenticationError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Authentication failed.",
-        )
-    except RateLimitError:
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Rate limit exceeded.",
-        )
-    except (APIConnectionError, APIError):
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="AI provider error.",
-        )
-        
 def extract_repo_info(repo_url: str) -> tuple[str, str]:
     pattern = r"https?://github\.com/([^/]+)/([^/]+)"
     match = re.match(pattern, repo_url)
@@ -177,13 +107,25 @@ def extract_repo_info(repo_url: str) -> tuple[str, str]:
 
     return owner, repo
 
- 
+def github_headers() -> dict:
+    token = os.getenv("GITHUB_TOKEN")
 
+    if token:
+        return {
+            "Authorization": f"Bearer {token}"
+        }
+
+    return {}
+ 
 
 def fetch_repository(owner: str, repo: str) -> dict:
     url = f"https://api.github.com/repos/{owner}/{repo}"
 
-    response = requests.get(url, timeout=15)
+    response = requests.get(
+        url,
+        headers=github_headers(),
+        timeout=15,
+    )
 
     if response.status_code != 200:
         raise HTTPException(
@@ -193,11 +135,14 @@ def fetch_repository(owner: str, repo: str) -> dict:
 
     return response.json()
 
-
 def fetch_repository_contents(owner: str, repo: str):
     url = f"https://api.github.com/repos/{owner}/{repo}/contents"
 
-    response = requests.get(url, timeout=20)
+    response = requests.get(
+        url,
+        headers=github_headers(),
+        timeout=20,
+    )
 
     if response.status_code != 200:
         raise HTTPException(
@@ -210,7 +155,11 @@ def fetch_repository_contents(owner: str, repo: str):
 def fetch_readme(owner: str, repo: str) -> str:
     url = f"https://api.github.com/repos/{owner}/{repo}/readme"
 
-    response = requests.get(url, timeout=20)
+    response = requests.get(
+        url,
+        headers=github_headers(),
+        timeout=20,
+    )
 
     if response.status_code != 200:
         return ""
@@ -225,7 +174,11 @@ def fetch_readme(owner: str, repo: str) -> str:
     return base64.b64decode(content).decode("utf-8", errors="ignore")
 
 def fetch_file_content(download_url: str) -> str:
-    response = requests.get(download_url, timeout=20)
+    response = requests.get(
+        download_url,
+        headers=github_headers(),
+        timeout=20,
+    )
 
     if response.status_code != 200:
         return ""
@@ -244,7 +197,11 @@ def collect_repository_files(
 
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
 
-    response = requests.get(url, timeout=20)
+    response = requests.get(
+        url,
+        headers=github_headers(),
+        timeout=20,
+    )
 
     if response.status_code != 200:
         return collected
@@ -303,12 +260,15 @@ app.add_middleware(
 @app.get("/health")
 def health_check() -> dict[str, str]:
     return {"status": "ok"}
-
 @app.post("/review-repository")
 def review_repository(data: RepositoryRequest):
     owner, repo = extract_repo_info(data.repo_url)
 
+    print("Owner:", owner)
+    print("Repo:", repo)
+
     repository = fetch_repository(owner, repo)
+
     source_files = collect_repository_files(owner, repo)
     readme = fetch_readme(owner, repo)
 
