@@ -1,4 +1,4 @@
-# project made by Alok
+# project made by Alok suyal
 
 # AI Code Review Assistant
 
